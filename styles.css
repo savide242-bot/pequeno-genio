@@ -1485,46 +1485,52 @@ p {
   position: absolute;
   top: 42%;
   transform: translateY(-50%);
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
   background-color: var(--color-white);
   color: var(--color-navy);
-  border: 1px solid var(--color-border);
-  box-shadow: 0 6px 18px rgba(23, 54, 93, 0.15);
+  border: 2px solid var(--color-border);
+  box-shadow: 0 8px 24px rgba(23, 54, 93, 0.18);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 10;
+  z-index: 50;
+  pointer-events: auto;
   transition: all var(--transition-normal);
+}
+
+.carousel-btn svg {
+  pointer-events: none;
 }
 
 .carousel-btn:hover {
   background-color: var(--color-coral);
   color: var(--color-white);
   border-color: var(--color-coral);
-  transform: translateY(-50%) scale(1.08);
+  transform: translateY(-50%) scale(1.1);
+  box-shadow: 0 10px 28px rgba(241, 95, 74, 0.35);
 }
 
 .carousel-btn-prev {
-  left: 12px;
+  left: 14px;
 }
 
 .carousel-btn-next {
-  right: 12px;
+  right: 14px;
 }
 
 @media (max-width: 600px) {
   .carousel-btn {
-    width: 38px;
-    height: 38px;
+    width: 42px;
+    height: 42px;
   }
   .carousel-btn-prev {
-    left: 4px;
+    left: 8px;
   }
   .carousel-btn-next {
-    right: 4px;
+    right: 8px;
   }
 }
 

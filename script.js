@@ -1,6 +1,6 @@
 /**
  * PEQUENO GÉNIO — 30 DIAS DE DESCOBERTA
- * Interatividade, UX & Acordeão de FAQ
+ * Interatividade, UX, Carrossel & FAQ
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -9,11 +9,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   faqItems.forEach(item => {
     const questionBtn = item.querySelector('.faq-question');
+    if (!questionBtn) return;
     
     questionBtn.addEventListener('click', () => {
       const isActive = item.classList.contains('active');
       
-      // Fecha outros itens para manter a página limpa
+      // Fecha outros itens
       faqItems.forEach(otherItem => {
         if (otherItem !== item) {
           otherItem.classList.remove('active');
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 2. Smooth Scrolling para todos os links internos (#planos, etc.)
+  // 2. Smooth Scrolling para links internos (#planos, #espreita-livro, etc.)
   const smoothLinks = document.querySelectorAll('a[href^="#"]');
   smoothLinks.forEach(link => {
     link.addEventListener('click', (e) => {
@@ -57,10 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const pricingSection = document.querySelector('#planos');
 
   if (stickyBar && heroSection) {
-    const observer = new IntersectionObserver(
+    const heroObserver = new IntersectionObserver(
       (entries) => {
         entries.forEach(entry => {
-          // Se o Hero NÃO estiver mais visível, mostramos a barra sticky (apenas no mobile)
           if (!entry.isIntersecting) {
             stickyBar.classList.add('visible');
             document.body.classList.add('has-sticky-bar');
@@ -72,23 +72,28 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       { threshold: 0.1 }
     );
+    heroObserver.observe(heroSection);
 
-    observer.observe(heroSection);
-
-    // Também esconde a barra quando o visitante já está nos planos para não sobrepor
     if (pricingSection) {
       const pricingObserver = new IntersectionObserver(
         (entries) => {
           entries.forEach(entry => {
             if (entry.isIntersecting) {
               stickyBar.classList.remove('visible');
-            } else if (!heroSection.getBoundingClientRect().top >= 0) {
-              stickyBar.classList.add('visible');
+            } else {
+              const heroRect = heroSection.getBoundingClientRect();
+              if (heroRect.bottom < 0) {
+                stickyBar.classList.add('visible');
+              }
             }
           });
         },
-        { threshold: 0.2 }
+        { threshold: 0.1 }
       );
+      pricingObserver.observe(pricingSection);
+    }
+  }
+
   // 4. Carrossel Interativo das Páginas Reais
   const carouselTrack = document.querySelector('.carousel-track');
   const carouselSlides = document.querySelectorAll('.carousel-slide');
@@ -101,16 +106,17 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentIndex = 0;
     const totalSlides = carouselSlides.length;
 
-    const updateCarousel = (index) => {
-      // Normaliza index
-      if (index < 0) index = totalSlides - 1;
-      if (index >= totalSlides) index = 0;
-      currentIndex = index;
+    const goToSlide = (index) => {
+      if (index < 0) {
+        currentIndex = totalSlides - 1;
+      } else if (index >= totalSlides) {
+        currentIndex = 0;
+      } else {
+        currentIndex = index;
+      }
 
-      // Desloca o trilho
       carouselTrack.style.transform = `translateX(-${currentIndex * 100}%)`;
 
-      // Atualiza dots
       dots.forEach((dot, i) => {
         if (i === currentIndex) {
           dot.classList.add('active');
@@ -121,75 +127,59 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       });
 
-      // Atualiza contador
       if (counterCurrent) {
         counterCurrent.textContent = currentIndex + 1;
       }
     };
 
     if (prevBtn) {
-      prevBtn.addEventListener('click', () => {
-        updateCarousel(currentIndex - 1);
+      prevBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToSlide(currentIndex - 1);
       });
     }
 
     if (nextBtn) {
-      nextBtn.addEventListener('click', () => {
-        updateCarousel(currentIndex + 1);
+      nextBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToSlide(currentIndex + 1);
       });
     }
 
     dots.forEach((dot, i) => {
-      dot.addEventListener('click', () => {
-        updateCarousel(i);
+      dot.addEventListener('click', (e) => {
+        e.preventDefault();
+        goToSlide(i);
       });
     });
 
-    // Navegação pelo teclado quando o carrossel estiver em foco/visível
+    // Navegação pelo teclado
     window.addEventListener('keydown', (e) => {
       if (e.key === 'ArrowLeft') {
-        const carouselSec = document.querySelector('.carousel-section');
-        if (carouselSec) {
-          const rect = carouselSec.getBoundingClientRect();
-          if (rect.top < window.innerHeight && rect.bottom > 0) {
-            updateCarousel(currentIndex - 1);
-          }
-        }
+        goToSlide(currentIndex - 1);
       } else if (e.key === 'ArrowRight') {
-        const carouselSec = document.querySelector('.carousel-section');
-        if (carouselSec) {
-          const rect = carouselSec.getBoundingClientRect();
-          if (rect.top < window.innerHeight && rect.bottom > 0) {
-            updateCarousel(currentIndex + 1);
-          }
-        }
+        goToSlide(currentIndex + 1);
       }
     });
 
-    // Suporte a Touch Swipe para Telemóveis
-    let touchStartX = 0;
-    let touchEndX = 0;
+    // Touch Swipe para Telemóveis
+    let startX = 0;
+    let endX = 0;
 
     carouselTrack.addEventListener('touchstart', (e) => {
-      touchStartX = e.changedTouches[0].screenX;
+      startX = e.changedTouches[0].clientX;
     }, { passive: true });
 
     carouselTrack.addEventListener('touchend', (e) => {
-      touchEndX = e.changedTouches[0].screenX;
-      handleSwipe();
-    }, { passive: true });
-
-    const handleSwipe = () => {
-      const swipeDistance = touchEndX - touchStartX;
-      if (Math.abs(swipeDistance) > 40) {
-        if (swipeDistance < 0) {
-          // Swipe para a esquerda -> Próximo slide
-          updateCarousel(currentIndex + 1);
+      endX = e.changedTouches[0].clientX;
+      const diff = endX - startX;
+      if (Math.abs(diff) > 40) {
+        if (diff < 0) {
+          goToSlide(currentIndex + 1);
         } else {
-          // Swipe para a direita -> Slide anterior
-          updateCarousel(currentIndex - 1);
+          goToSlide(currentIndex - 1);
         }
       }
-    };
+    }, { passive: true });
   }
 });
